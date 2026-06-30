@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>אזור אישי</title>
+  <style>
+    :root {
+      --card: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: #334155;
+      --accent: #6366f1;
+      --ok: #34d399;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text); padding: 20px;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 36px; width: 100%; max-width: 440px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+    .header img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--accent); }
+    .header .greet { font-size: 13px; color: var(--muted); }
+    .header .name { font-size: 22px; font-weight: 700; }
+    .header .email { font-size: 13px; color: var(--muted); }
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+    .field input {
+      width: 100%; background: #0f172a; border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px; color: var(--text); font-size: 15px;
+    }
+    .field input:focus { outline: none; border-color: var(--accent); }
+    .save-btn {
+      width: 100%; background: var(--accent); color: #fff; border: none;
+      border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 600;
+      cursor: pointer; transition: .2s; margin-top: 8px;
+    }
+    .save-btn:hover { filter: brightness(1.1); }
+    .logout-btn {
+      width: 100%; background: transparent; color: var(--muted);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px; font-size: 14px; cursor: pointer; margin-top: 12px; transition: .2s;
+    }
+    .logout-btn:hover { background: var(--border); color: var(--text); }
+    .status { text-align: center; font-size: 14px; margin-top: 14px; min-height: 18px; }
+    .status.ok { color: var(--ok); }
+    .status.err { color: #f87171; }
+    .loading { text-align: center; color: var(--muted); padding: 40px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div id="loading" class="loading">טוען…</div>
+
+    <div id="content" style="display:none;">
+      <div class="header">
+        <img id="avatar" src="" alt="avatar" />
+        <div>
+          <div class="greet">ברוך הבא 👋</div>
+          <div class="name" id="user-name"></div>
+          <div class="email" id="user-email"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="phone">מספר טלפון</label>
+        <input type="tel" id="phone" placeholder="050-0000000" />
+      </div>
+      <div class="field">
+        <label for="role">תפקיד</label>
+        <input type="text" id="role" placeholder="לדוגמה: מנהל, לקוח, נהג" />
+      </div>
+
+      <button class="save-btn" id="save">שמירת פרטים</button>
+      <button class="logout-btn" id="logout">התנתקות</button>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    const SUPABASE_URL = 'https://rwgkmsubpnjdyjhfzwpa.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_NUgJgQXRpxk3zoBnEwBIYA_V7JTdg6V';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const statusEl = document.getElementById('status');
+
+    function setStatus(msg, ok) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status ' + (ok ? 'ok' : 'err');
+    }
+
+    // אם אין session — חזרה לדף ההתחברות
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = 'index.html';
+    } else {
+      const user = session.user;
+      const meta = user.user_metadata || {};
+      document.getElementById('avatar').src = meta.avatar_url || meta.picture || '';
+      document.getElementById('user-name').textContent = meta.full_name || meta.name || 'משתמש';
+      document.getElementById('user-email').textContent = user.email || '';
+
+      // טעינת הפרטים השמורים מ-profiles
+      const { data: profile } = await supabase
+        .from('profiles').select('phone, role').eq('id', user.id).single();
+      if (profile) {
+        document.getElementById('phone').value = profile.phone || '';
+        document.getElementById('role').value = profile.role || '';
+      }
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+
+      // שמירת פרטים
+      document.getElementById('save').addEventListener('click', async () => {
+        const phone = document.getElementById('phone').value.trim();
+        const role = document.getElementById('role').value.trim();
+        const { error } = await supabase.from('profiles')
+          .update({ phone, role }).eq('id', user.id);
+        if (error) setStatus('שגיאה בשמירה: ' + error.message, false);
+        else setStatus('הפרטים נשמרו בהצלחה ✓', true);
+      });
+
+      // התנתקות
+      document.getElementById('logout').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'index.html';
+      });
+    }
+  </script>
+</body>
+</html>
