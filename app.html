@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>freeCar — הסעות שיתופיות</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- סרגל ניווט עליון (נבנה דינמית ב-app.js) -->
+  <header class="topbar" id="topbar"></header>
+
+  <main class="container">
+    <!-- מסך 1: הרשמה ומסמכים -->
+    <section class="screen" id="screen-register"></section>
+    <!-- מסך 2: הזמנת הסעה -->
+    <section class="screen" id="screen-order"></section>
+    <!-- מסך 3: סטטוס בקשות -->
+    <section class="screen" id="screen-status"></section>
+    <!-- מסך 4: הסעות מאושרות/בטיפול/נדחו -->
+    <section class="screen" id="screen-rides"></section>
+    <!-- מסך 5: Admin -->
+    <section class="screen" id="screen-admin"></section>
+    <!-- מסך 6: נהג -->
+    <section class="screen" id="screen-driver"></section>
+  </main>
+
+  <!-- מודאל כללי (תשלום / ברקוד / הצעות) -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal"></div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

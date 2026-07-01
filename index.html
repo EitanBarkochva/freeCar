@@ -6,31 +6,27 @@
   <title>הרשמה / התחברות</title>
   <style>
     :root {
-      --bg: #0f172a;
       --card: #1e293b;
       --text: #f1f5f9;
       --muted: #94a3b8;
       --border: #334155;
       --accent: #6366f1;
+      --ok: #34d399;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text);
-      padding: 20px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text); padding: 20px;
     }
     .card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 20px;
       padding: 40px 36px;
-      width: 100%;
-      max-width: 400px;
+      width: 100%; max-width: 400px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.4);
       text-align: center;
     }
@@ -43,7 +39,29 @@
       font-size: 28px;
     }
     h1 { font-size: 24px; margin-bottom: 8px; }
-    p.sub { color: var(--muted); font-size: 15px; margin-bottom: 28px; }
+    p.sub { color: var(--muted); font-size: 15px; margin-bottom: 24px; }
+
+    .field { text-align: right; margin-bottom: 14px; }
+    .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .field input {
+      width: 100%; background: #0f172a; border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px; color: var(--text); font-size: 15px;
+    }
+    .field input:focus { outline: none; border-color: var(--accent); }
+
+    .row { display: flex; gap: 10px; margin-top: 4px; }
+    .btn {
+      flex: 1; border: none; border-radius: 12px; padding: 13px;
+      font-size: 15px; font-weight: 600; cursor: pointer; transition: .15s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--border); }
+
+    .divider { display: flex; align-items: center; gap: 12px; margin: 22px 0; color: var(--muted); font-size: 13px; }
+    .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
     .google-btn {
       width: 100%;
       display: flex; align-items: center; justify-content: center; gap: 12px;
@@ -54,42 +72,42 @@
     }
     .google-btn:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.3); transform: translateY(-1px); }
     .google-btn img { width: 22px; height: 22px; }
-    .profile { display: none; }
-    .profile img { width: 80px; height: 80px; border-radius: 50%; margin-bottom: 16px; border: 3px solid var(--accent); }
-    .profile .name { font-size: 20px; font-weight: 600; }
-    .profile .email { color: var(--muted); font-size: 14px; margin-top: 4px; margin-bottom: 24px; }
-    .logout-btn {
-      width: 100%; background: transparent; color: var(--muted);
-      border: 1px solid var(--border); border-radius: 12px;
-      padding: 12px; font-size: 15px; cursor: pointer; transition: .2s;
-    }
-    .logout-btn:hover { background: var(--border); color: var(--text); }
-    .error { color: #f87171; font-size: 14px; margin-top: 16px; display: none; }
+
+    .status { font-size: 14px; margin-top: 16px; min-height: 18px; }
+    .status.err { color: #f87171; }
+    .status.ok { color: var(--ok); }
     .badge { margin-top: 20px; font-size: 12px; color: var(--muted); }
   </style>
 </head>
 <body>
   <div class="card">
-    <!-- מצב לפני התחברות -->
-    <div id="login-view">
-      <div class="logo">🚗</div>
-      <h1>ברוכים הבאים</h1>
-      <p class="sub">הירשמו או התחברו כדי להמשיך</p>
-      <button class="google-btn" id="google-login">
-        <img src="https://www.google.com/favicon.ico" alt="Google" />
-        המשך עם Google
-      </button>
-      <div class="error" id="error-msg"></div>
+    <div class="logo">🚗</div>
+    <h1>ברוכים הבאים</h1>
+    <p class="sub">הירשמו או התחברו כדי להמשיך</p>
+
+    <!-- טופס אימייל + סיסמה -->
+    <div class="field">
+      <label for="email">אימייל</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label for="password">סיסמה</label>
+      <input type="password" id="password" placeholder="לפחות 6 תווים" autocomplete="current-password" />
+    </div>
+    <div class="row">
+      <button class="btn btn-primary" id="signin">התחברות</button>
+      <button class="btn btn-secondary" id="signup">הרשמה</button>
     </div>
 
-    <!-- מצב אחרי התחברות -->
-    <div class="profile" id="profile-view">
-      <img id="avatar" src="" alt="avatar" />
-      <div class="name" id="user-name"></div>
-      <div class="email" id="user-email"></div>
-      <button class="logout-btn" id="logout">התנתקות</button>
-    </div>
+    <div class="divider">או</div>
 
+    <!-- התחברות עם Google -->
+    <button class="google-btn" id="google-login">
+      <img src="https://www.google.com/favicon.ico" alt="Google" />
+      המשך עם Google
+    </button>
+
+    <div class="status" id="status"></div>
     <div class="badge">מאובטח באמצעות Supabase Auth</div>
   </div>
 
@@ -98,12 +116,48 @@
 
     const SUPABASE_URL = 'https://rwgkmsubpnjdyjhfzwpa.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_NUgJgQXRpxk3zoBnEwBIYA_V7JTdg6V';
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const loginView = document.getElementById('login-view');
-    const profileView = document.getElementById('profile-view');
-    const errorMsg = document.getElementById('error-msg');
+    const statusEl = document.getElementById('status');
+    const emailEl = document.getElementById('email');
+    const passEl = document.getElementById('password');
+
+    function setStatus(msg, ok) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status ' + (ok ? 'ok' : 'err');
+    }
+
+    function goDashboard() { window.location.href = 'app.html'; }
+
+    function getCreds() {
+      const email = emailEl.value.trim();
+      const password = passEl.value;
+      if (!email || !password) { setStatus('נא למלא אימייל וסיסמה', false); return null; }
+      if (password.length < 6) { setStatus('הסיסמה חייבת להכיל לפחות 6 תווים', false); return null; }
+      return { email, password };
+    }
+
+    // הרשמה עם אימייל + סיסמה
+    document.getElementById('signup').addEventListener('click', async () => {
+      const creds = getCreds(); if (!creds) return;
+      setStatus('נרשם…', true);
+      const { data, error } = await supabase.auth.signUp(creds);
+      if (error) return setStatus('שגיאה: ' + error.message, false);
+      if (data.session) {
+        goDashboard(); // אם אישור אימייל מכובה — מחובר מיד
+      } else {
+        setStatus('נשלח אליך אימייל אישור — אשר אותו כדי להתחבר ✉️', true);
+      }
+    });
+
+    // התחברות עם אימייל + סיסמה
+    document.getElementById('signin').addEventListener('click', async () => {
+      const creds = getCreds(); if (!creds) return;
+      setStatus('מתחבר…', true);
+      const { error } = await supabase.auth.signInWithPassword(creds);
+      if (error) return setStatus('שגיאה: ' + error.message, false);
+      goDashboard();
+    });
 
     // התחברות עם Google
     document.getElementById('google-login').addEventListener('click', async () => {
@@ -111,37 +165,12 @@
         provider: 'google',
         options: { redirectTo: window.location.href }
       });
-      if (error) showError(error.message);
+      if (error) setStatus('שגיאה: ' + error.message, false);
     });
 
-    // התנתקות
-    document.getElementById('logout').addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      render(null);
-    });
-
-    function showError(msg) {
-      errorMsg.textContent = 'שגיאה: ' + msg;
-      errorMsg.style.display = 'block';
-    }
-
-    function render(user) {
-      if (user) {
-        // מחובר — מעבר לאזור האישי
-        window.location.href = 'dashboard.html';
-      } else {
-        loginView.style.display = 'block';
-        profileView.style.display = 'none';
-      }
-    }
-
-    // בדיקת מצב התחברות בטעינת הדף ובכל שינוי
-    supabase.auth.onAuthStateChange((_event, session) => {
-      render(session?.user ?? null);
-    });
-
+    // אם כבר מחובר — ישר לאזור האישי
     const { data: { session } } = await supabase.auth.getSession();
-    render(session?.user ?? null);
+    if (session) goDashboard();
   </script>
 </body>
 </html>

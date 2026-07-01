@@ -1,0 +1,170 @@
+/* ===================== משתני עיצוב ===================== */
+:root {
+  --navy: #0f172a;         /* כחול כהה לכותרות */
+  --navy-2: #1e293b;
+  --card: #1e293b;
+  --panel: #0f172a;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --border: #334155;
+  --accent: #6366f1;
+  --green: #22c55e;        /* מאושר */
+  --orange: #f59e0b;       /* בטיפול */
+  --red: #ef4444;          /* נדחה */
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  min-height: 100vh;
+  color: var(--text);
+  direction: rtl;
+}
+
+/* ===================== התחברות (index) ===================== */
+.auth-wrap {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+
+/* ===================== סרגל ניווט עליון ===================== */
+.topbar {
+  background: var(--navy);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex; align-items: center; gap: 16px;
+  flex-wrap: wrap;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar .brand { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.topbar .brand span { font-size: 24px; }
+.nav { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+.nav button {
+  background: transparent; color: var(--muted);
+  border: 1px solid transparent; border-radius: 10px;
+  padding: 9px 14px; font-size: 14px; cursor: pointer; transition: .15s;
+}
+.nav button:hover { color: var(--text); background: var(--navy-2); }
+.nav button.active { color: #fff; background: var(--accent); }
+.topbar .user-box { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.topbar .user-box img { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--accent); }
+.role-select {
+  background: var(--navy-2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-size: 13px;
+}
+
+/* ===================== פריסת תוכן ===================== */
+.container { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+.screen { display: none; }
+.screen.active { display: block; animation: fade .2s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+h1.screen-title { font-size: 26px; margin-bottom: 6px; color: #c7d2fe; }
+p.screen-sub { color: var(--muted); margin-bottom: 22px; font-size: 15px; }
+
+/* ===================== כרטיסים ===================== */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px; margin-bottom: 22px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+.card h2 { font-size: 18px; margin-bottom: 16px; color: #e0e7ff; }
+.card h3 { font-size: 15px; margin: 14px 0 10px; color: #cbd5e1; }
+
+/* ===================== טפסים ===================== */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field { margin-bottom: 14px; }
+.field.full { grid-column: 1 / -1; }
+.field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.field label .req { color: var(--red); }
+.field input, .field select, .field textarea {
+  width: 100%; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; padding: 11px; color: var(--text); font-size: 14px;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
+.field input[readonly] { background: #111827; color: var(--muted); }
+
+.checkbox-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; font-size: 14px; line-height: 1.5; }
+.checkbox-row input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--accent); }
+
+/* ===================== כפתורים ===================== */
+.btn {
+  border: none; border-radius: 11px; padding: 12px 20px;
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: .15s;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--navy-2); }
+.btn-green { background: var(--green); color: #052e16; }
+.btn-red { background: var(--red); color: #fff; }
+.btn-orange { background: var(--orange); color: #451a03; }
+.btn-sm { padding: 7px 12px; font-size: 13px; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+
+/* ===================== טבלאות ===================== */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 11px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+th { background: var(--navy); color: #c7d2fe; font-weight: 600; white-space: nowrap; }
+tr:hover td { background: rgba(99,102,241,.06); }
+td.empty { text-align: center; color: var(--muted); padding: 26px; }
+
+/* ===================== תגי סטטוס ===================== */
+.badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+.badge.approved { background: rgba(34,197,94,.15); color: #4ade80; }
+.badge.pending  { background: rgba(245,158,11,.15); color: #fbbf24; }
+.badge.rejected { background: rgba(239,68,68,.15); color: #f87171; }
+.badge.blocked  { background: rgba(239,68,68,.2); color: #fca5a5; }
+.badge.paid     { background: rgba(34,197,94,.15); color: #4ade80; }
+.badge.unpaid   { background: rgba(148,163,184,.15); color: #cbd5e1; }
+
+/* ===================== הודעות ===================== */
+.alert { border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 14px; }
+.alert.info { background: rgba(99,102,241,.12); border: 1px solid var(--accent); color: #c7d2fe; }
+.alert.warn { background: rgba(245,158,11,.12); border: 1px solid var(--orange); color: #fcd34d; }
+.alert.err  { background: rgba(239,68,68,.12); border: 1px solid var(--red); color: #fca5a5; }
+.alert.ok   { background: rgba(34,197,94,.12); border: 1px solid var(--green); color: #86efac; }
+.inline-status { font-size: 13px; margin-top: 8px; min-height: 16px; }
+.inline-status.err { color: #f87171; }
+.inline-status.ok { color: #86efac; }
+
+/* ===================== מודאל ===================== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.6);
+  display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+  padding: 28px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto;
+}
+.modal h2 { margin-bottom: 16px; }
+.modal .close-x { float: left; cursor: pointer; color: var(--muted); font-size: 22px; line-height: 1; }
+
+/* ===================== ברקוד / QR ===================== */
+.qr-box { text-align: center; padding: 16px; }
+.qr-box img { background: #fff; padding: 8px; border-radius: 12px; }
+.qr-code-text {
+  font-family: monospace; font-size: 15px; letter-spacing: 1px;
+  background: var(--panel); border: 1px dashed var(--border); border-radius: 8px;
+  padding: 10px; margin-top: 12px; word-break: break-all;
+}
+
+/* ===================== קאונטר Admin ===================== */
+.counter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 12px; }
+.counter-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+.counter-card .num { font-size: 28px; font-weight: 800; color: var(--accent); }
+.counter-card .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* ===================== רספונסיבי ===================== */
+@media (max-width: 640px) {
+  .grid { grid-template-columns: 1fr; }
+  .topbar { flex-direction: column; align-items: stretch; }
+  .nav { justify-content: center; }
+}
