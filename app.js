@@ -203,34 +203,47 @@ function renderRegister() {
     </div>
 
     <div class="card">
-      <h2>העלאת 3 מסמכים רשמיים</h2>
-      <p class="screen-sub">סוגי קבצים מותרים: PDF / JPG / PNG. בנוסף, הזן/י ידנית את פרטי הרכב (בדמו — במקום OCR).</p>
+      <h2>מסמכים (אופציונלי)</h2>
+      <p class="screen-sub">העלאת המסמכים אינה חובה. סמן/י מה ברשותך. ניתן גם להעלות קבצים ולהזין פרטי רכב — ואם יוזנו פרטי רכב גם ברישיון וגם בביטוח, המערכת תשווה ביניהם.</p>
 
-      <h3>1. רישיון נהיגה בתוקף</h3>
+      <div class="checkbox-row">
+        <input type="checkbox" id="hasLicense" ${p.hasLicense ? 'checked' : ''}>
+        <label for="hasLicense">יש לי רישיון נהיגה בתוקף</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="hasVehicle" ${p.hasVehicle ? 'checked' : ''}>
+        <label for="hasVehicle">יש לי רכב</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="hasInsurance" ${p.hasInsurance ? 'checked' : ''}>
+        <label for="hasInsurance">יש לי ביטוח חובה בתוקף</label>
+      </div>
+
+      <h3>1. רישיון נהיגה (אופציונלי)</h3>
       <div class="grid">
         <div class="field"><label>קובץ רישיון נהיגה</label><input type="file" id="file_dl" accept=".pdf,.jpg,.jpeg,.png"></div>
         <div class="field"><label>תוקף רישיון</label><input type="date" id="dl_expiry" value="${dl.expiryDate || ''}"></div>
       </div>
 
-      <h3>2. רישיון רכב בתוקף</h3>
+      <h3>2. רישיון רכב (אופציונלי)</h3>
       <div class="grid">
         <div class="field"><label>קובץ רישיון רכב</label><input type="file" id="file_vl" accept=".pdf,.jpg,.jpeg,.png"></div>
         <div class="field"><label>תוקף</label><input type="date" id="vl_expiry" value="${vl.expiryDate || ''}"></div>
-        <div class="field"><label>מספר רכב (ברישיון) <span class="req">*</span></label><input id="vl_number" value="${vl.vehicleNumber || ''}"></div>
-        <div class="field"><label>דגם רכב (ברישיון) <span class="req">*</span></label><input id="vl_model" value="${vl.vehicleModel || ''}"></div>
+        <div class="field"><label>מספר רכב (ברישיון)</label><input id="vl_number" value="${vl.vehicleNumber || ''}"></div>
+        <div class="field"><label>דגם רכב (ברישיון)</label><input id="vl_model" value="${vl.vehicleModel || ''}"></div>
       </div>
 
-      <h3>3. תעודת ביטוח חובה בתוקף</h3>
+      <h3>3. תעודת ביטוח חובה (אופציונלי)</h3>
       <div class="grid">
         <div class="field"><label>קובץ ביטוח חובה</label><input type="file" id="file_ins" accept=".pdf,.jpg,.jpeg,.png"></div>
         <div class="field"><label>תוקף</label><input type="date" id="ins_expiry" value="${ins.expiryDate || ''}"></div>
-        <div class="field"><label>מספר רכב (בביטוח) <span class="req">*</span></label><input id="ins_number" value="${ins.vehicleNumber || ''}"></div>
-        <div class="field"><label>דגם רכב (בביטוח) <span class="req">*</span></label><input id="ins_model" value="${ins.vehicleModel || ''}"></div>
+        <div class="field"><label>מספר רכב (בביטוח)</label><input id="ins_number" value="${ins.vehicleNumber || ''}"></div>
+        <div class="field"><label>דגם רכב (בביטוח)</label><input id="ins_model" value="${ins.vehicleModel || ''}"></div>
       </div>
     </div>
 
     <div class="btn-row">
-      <button class="btn btn-primary" id="submit-register">שמירה ובדיקת מסמכים</button>
+      <button class="btn btn-primary" id="submit-register">שמירת הרשמה</button>
     </div>
     <div class="inline-status" id="register-status"></div>
   `;
@@ -252,6 +265,9 @@ function registerUser() {
     phone: val('phone'), email: val('email'),
     homeAddress: val('homeAddress'), homeEntrance: val('homeEntrance'),
     workAddress: val('workAddress'), workEntrance: val('workEntrance'),
+    hasLicense: document.getElementById('hasLicense').checked,
+    hasVehicle: document.getElementById('hasVehicle').checked,
+    hasInsurance: document.getElementById('hasInsurance').checked,
   };
 
   // ---- ולידציות (סעיף 18) ----
@@ -265,9 +281,9 @@ function registerUser() {
   if (!data.homeAddress) errors.push('חובה כתובת מגורים');
   if (!data.workAddress) errors.push('חובה כתובת עבודה');
 
+  // פרטי הרכב אופציונליים — נאספים אם הוזנו (לצורך השוואה רישיון מול ביטוח)
   const vlNumber = val('vl_number'), vlModel = val('vl_model');
   const insNumber = val('ins_number'), insModel = val('ins_model');
-  if (!vlNumber || !vlModel || !insNumber || !insModel) errors.push('חובה למלא מספר ודגם רכב ברישיון וגם בביטוח');
 
   if (errors.length) { showStatus(status, errors.join(' · '), false); return; }
 
@@ -288,7 +304,7 @@ function registerUser() {
   } else {
     db.update('users', p.id, { status: 'approved' });
     State.profile.status = 'approved';
-    showStatus(status, '✓ הפרטים נשמרו והמסמכים אושרו. ניתן להזמין הסעות.', true);
+    showStatus(status, '✓ הפרטים נשמרו. ניתן להזמין הסעות.', true);
   }
   setTimeout(() => renderRegister(), 400);
 }
@@ -315,6 +331,8 @@ function validateUserDocuments(userId) {
   if (!vl || !ins) return { blocked: false };
 
   const norm = s => (s || '').replace(/[-\s]/g, '').toLowerCase();
+  // ההשוואה רצה רק אם הוזנו פרטי רכב גם ברישיון וגם בביטוח (אחרת אין מה להשוות)
+  if (!norm(vl.vehicleNumber) || !norm(ins.vehicleNumber)) return { blocked: false };
   if (norm(vl.vehicleNumber) !== norm(ins.vehicleNumber))
     return { blocked: true, reason: 'מספר הרכב ברישיון אינו זהה למספר הרכב בביטוח החובה' };
   if (norm(vl.vehicleModel) !== norm(ins.vehicleModel))
@@ -375,14 +393,14 @@ function renderOrder() {
   const dateEl = document.getElementById('o_date');
   dateEl.min = new Date().toISOString().split('T')[0];   // תאריך עתידי בלבד
   dateEl.addEventListener('change', () => {
-    if (dateEl.value) document.getElementById('hebrew-preview').textContent = `${generateHebrewDate(dateEl.value)} · יום ${getWeekday(dateEl.value)}`;
+    if (dateEl.value) document.getElementById('hebrew-preview').textContent = `${generateHebrewDate(dateEl.value)} · ${getWeekday(dateEl.value)}`;
   });
   document.getElementById('submit-order').addEventListener('click', createRideRequest);
 }
 
 function rideRowOrder(r) {
   return `<tr>
-    <td>${r.gregorianDate}<br><small style="color:var(--muted)">${r.hebrewDate} · יום ${r.weekday}</small></td>
+    <td>${r.gregorianDate}<br><small style="color:var(--muted)">${r.hebrewDate} · ${r.weekday}</small></td>
     <td>${r.pickupTime}</td><td>${r.pickupAddress}</td><td>${r.destinationAddress}</td>
     <td>${r.passengersCount}</td>
     <td>${r.totalPrice ? r.totalPrice + ' ₪' : '<span class="badge unpaid">ממתין למחיר נהג</span>'}</td>
@@ -622,7 +640,10 @@ function wireRidesEvents() {
   q('[data-accept]').forEach(b => b.addEventListener('click', () => acceptOffer(b.dataset.accept)));
   q('[data-decline]').forEach(b => b.addEventListener('click', () => rejectOffer(b.dataset.decline)));
   q('[data-scooter]').forEach(b => b.addEventListener('click', () => offerScooter(b.dataset.scooter)));
-  q('[data-taxi]').forEach(b => b.addEventListener('click', () => acceptOffer(b.dataset.taxi, true)));
+  q('[data-taxi]').forEach(b => b.addEventListener('click', () => {
+    const o = db.find('offers', b.dataset.taxi);
+    if (o) { db.update('offers', o.id, { userResponse: 'accepted' }); orderSpecialTaxi(o.rideRequestId); }
+  }));
   q('[data-special]').forEach(b => b.addEventListener('click', () => orderSpecialTaxi(b.dataset.special)));
 }
 
@@ -637,7 +658,7 @@ function refreshApprovedRidesTable() {
 }
 
 // acceptOffer() — אישור הצעת שינוי → עדכון בקשה → מעבר לתשלום (סעיף 9.6)
-function acceptOffer(offerId, isTaxi = false) {
+function acceptOffer(offerId) {
   const offer = db.find('offers', offerId);
   if (!offer) return;
   const ride = db.find('rideRequests', offer.rideRequestId);
@@ -645,7 +666,8 @@ function acceptOffer(offerId, isTaxi = false) {
   if (offer.newDate) { patch.gregorianDate = offer.newDate; patch.hebrewDate = generateHebrewDate(offer.newDate); patch.weekday = getWeekday(offer.newDate); }
   if (offer.newTime) patch.pickupTime = offer.newTime;
   if (offer.newPickupAddress) patch.pickupAddress = offer.newPickupAddress;
-  if (isTaxi && offer.taxiFullPrice) { patch.fullMeterPrice = offer.taxiFullPrice; patch.totalPrice = offer.taxiFullPrice; patch.halfPricePerPassenger = offer.taxiFullPrice; }
+  // מונית ספיישל בתעריף מלא — תעריף מלא אחד (לא מוכפל במספר נוסעים)
+  if (offer.taxiFullPrice) { patch.fullMeterPrice = offer.taxiFullPrice; patch.totalPrice = offer.taxiFullPrice; patch.halfPricePerPassenger = null; }
   db.update('rideRequests', ride.id, patch);
   db.update('offers', offerId, { userResponse: 'accepted' });
   alert('ההצעה אושרה. הבקשה עודכנה לסטטוס "מאושרת". ניתן לעבור לתשלום במסך ההסעות המאושרות.');
@@ -668,11 +690,12 @@ function offerScooter(offerId) {
 
 // הזמנת מונית ספיישל בתעריף מלא (סעיף 9.8)
 function orderSpecialTaxi(rideId) {
-  const ride = db.find('rideRequests', rideId);
-  const full = prompt('הזמנת מונית ספיישל בתעריף מלא. הזן/י את מחיר המונה המלא (₪):', ride.fullMeterPrice || 100);
-  if (!full) return;
+  const full = prompt('הזמנת מונית ספיישל בתעריף מלא. הזן/י את מחיר המונה המלא (₪):', '100');
+  if (full === null) return;
   const price = Number(full);
-  db.update('rideRequests', rideId, { status: 'approved', fullMeterPrice: price, halfPricePerPassenger: price, totalPrice: price * ride.passengersCount, rejectionReason: '' });
+  if (!price || price <= 0) { alert('יש להזין מחיר חיובי.'); return; }
+  // תעריף מלא — תשלום מלא אחד על ידי המשתמש
+  db.update('rideRequests', rideId, { status: 'approved', fullMeterPrice: price, halfPricePerPassenger: null, totalPrice: price, rejectionReason: '' });
   alert('מונית ספיישל הוזמנה בתעריף מלא. ניתן לעבור לתשלום.');
   renderRides();
 }
@@ -685,7 +708,7 @@ function openPaymentModal(rideId) {
   openModal(`
     <span class="close-x" data-close>×</span>
     <h2>תשלום עבור הסעה</h2>
-    <div class="alert info">סכום לתשלום: <b>${ride.totalPrice} ₪</b> (${ride.passengersCount} נוסעים × ${ride.halfPricePerPassenger} ₪)</div>
+    <div class="alert info">סכום לתשלום: <b>${ride.totalPrice} ₪</b>${ride.halfPricePerPassenger ? ` (${ride.passengersCount} נוסעים × ${ride.halfPricePerPassenger} ₪)` : ' (תעריף מלא)'}</div>
     <div class="field"><label>שם בעל הכרטיס <span class="req">*</span></label><input id="pay_name"></div>
     <div class="field"><label>4 ספרות אחרונות <span class="req">*</span></label><input id="pay_last4" maxlength="4" placeholder="****"></div>
     <div class="field"><label>תוקף <span class="req">*</span></label><input id="pay_exp" placeholder="MM/YY"></div>
