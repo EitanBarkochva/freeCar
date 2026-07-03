@@ -105,7 +105,7 @@ function loadOrCreateProfile() {
 //  4. סרגל ניווט + החלפת תפקיד
 // ============================================================
 const SCREENS_BY_ROLE = {
-  user:   [['register','הרשמה ומסמכים'], ['order','הזמנת הסעה'], ['status','סטטוס בקשות'], ['rides','ההסעות שלי']],
+  user:   [['register','הרשמה ומסמכים'], ['order','הזמנת נסיעה'], ['status','סטטוס בקשות'], ['rides','ההסעות שלי']],
   admin:  [['admin','ניהול (Admin)']],
   driver: [['driver','מסך נהג']],
 };
@@ -362,22 +362,49 @@ function renderOrder() {
   const timeOptions = generateTimeOptions().map(t => `<option value="${t}">${t}</option>`).join('');
   const myRides = db.where('rideRequests', r => r.userId === p.id);
 
+  const home = p.homeAddress || '';
+
   document.getElementById('screen-order').innerHTML = `
-    <h1 class="screen-title">הזמנת הסעה</h1>
-    <p class="screen-sub">הזן/י בקשת הסעה חדשה. הסכום מחושב אוטומטית לפי מחצית ממחיר המונה שמזין הנהג.</p>
+    <h1 class="screen-title">הזמנת נסיעה</h1>
+    <p class="screen-sub">המקור הוא כתובת המגורים שלך. בחר/י יעד בלחיצה על המפה, או הקלד/י עיר · רחוב · מספר בית והמפה תתעדכן.</p>
 
     <div class="card">
       <h2>בקשה חדשה</h2>
-      <div class="grid">
-        <div class="field"><label>תאריך <span class="req">*</span></label><input type="date" id="o_date"><small id="hebrew-preview" style="color:var(--muted)"></small></div>
-        <div class="field"><label>שעת איסוף <span class="req">*</span></label><select id="o_time">${timeOptions}</select></div>
-        <div class="field full"><label>כתובת איסוף מלאה <span class="req">*</span></label><input id="o_pickup" placeholder="רחוב, מספר בית, עיר + מספר כניסה"></div>
-        <div class="field full"><label>כתובת יעד מלאה <span class="req">*</span></label><input id="o_dest" placeholder="רחוב, מספר בית, עיר + מספר כניסה"></div>
-        <div class="field"><label>מספר נוסעים (כולל אותך) <span class="req">*</span></label><input type="number" id="o_pax" min="1" value="1"></div>
-        <div class="field"><label>סכום לתשלום</label><input id="o_total" readonly value="יחושב לאחר שהנהג יזין מחיר מונה"></div>
+      <div class="order-layout">
+        <!-- טופס (ימין) -->
+        <div class="order-form">
+          <div class="grid">
+            <div class="field"><label>תאריך <span class="req">*</span></label><input type="date" id="o_date"><small id="hebrew-preview" style="color:var(--muted)"></small></div>
+            <div class="field"><label>שעת איסוף <span class="req">*</span></label><select id="o_time">${timeOptions}</select></div>
+          </div>
+
+          <div class="field"><label>🟢 כתובת מקור (המגורים שלך) <span class="req">*</span></label><input id="o_pickup" value="${home.replace(/"/g, '&quot;')}" placeholder="כתובת המגורים שלך"></div>
+
+          <h3>🔴 יעד</h3>
+          <div class="grid">
+            <div class="field"><label>עיר</label><input id="d_city" placeholder="לדוגמה: תל אביב"></div>
+            <div class="field"><label>רחוב</label><input id="d_street" placeholder="לדוגמה: אלנבי"></div>
+            <div class="field"><label>מספר בית</label><input id="d_house" placeholder="לדוגמה: 12"></div>
+            <div class="field" style="display:flex;align-items:flex-end"><button class="btn btn-ghost btn-sm" id="d_search" style="width:100%">🔎 חפש/י על המפה</button></div>
+          </div>
+          <div class="field"><label>כתובת יעד מלאה <span class="req">*</span></label><input id="o_dest" placeholder="תתמלא אוטומטית מהמפה / החיפוש"></div>
+          <div class="geo-status" id="geo-status"></div>
+
+          <div class="grid">
+            <div class="field"><label>מספר נוסעים (כולל אותך) <span class="req">*</span></label><input type="number" id="o_pax" min="1" value="1"></div>
+            <div class="field"><label>סכום לתשלום</label><input id="o_total" readonly value="יחושב לאחר שהנהג יזין מחיר מונה"></div>
+          </div>
+
+          <div class="btn-row"><button class="btn btn-primary" id="submit-order">שליחת בקשה</button></div>
+          <div class="inline-status" id="order-status"></div>
+        </div>
+
+        <!-- מפה (שמאל) -->
+        <div class="order-map-wrap">
+          <div id="order-map" class="order-map"></div>
+          <div class="map-legend">🟢 מקור (כתובתך) · 🔴 יעד — לחיצה על המפה מציבה את היעד וממלאת את הכתובת</div>
+        </div>
       </div>
-      <div class="btn-row"><button class="btn btn-primary" id="submit-order">שליחת בקשה</button></div>
-      <div class="inline-status" id="order-status"></div>
     </div>
 
     <div class="card">
@@ -395,7 +422,115 @@ function renderOrder() {
   dateEl.addEventListener('change', () => {
     if (dateEl.value) document.getElementById('hebrew-preview').textContent = `${generateHebrewDate(dateEl.value)} · ${getWeekday(dateEl.value)}`;
   });
+  document.getElementById('d_search').addEventListener('click', searchDestinationOnMap);
   document.getElementById('submit-order').addEventListener('click', createRideRequest);
+
+  initOrderMap();   // אתחול המפה לאחר שה-DOM מוכן
+}
+
+// ============================================================
+//  מפה + Geocoding (Leaflet + OpenStreetMap / Nominatim)
+//  בעתיד ניתן להחליף ל-Google Maps API ללא שינוי בשאר הקוד.
+// ============================================================
+const MapState = { map: null, originMarker: null, destMarker: null, originCoords: null, destCoords: null };
+
+function mapPin(emoji) {
+  return window.L.divIcon({ html: `<div class="map-pin">${emoji}</div>`, className: '', iconSize: [26, 26], iconAnchor: [13, 24] });
+}
+
+function initOrderMap() {
+  const L = window.L;
+  const box = document.getElementById('order-map');
+  if (!L || !box) { if (box) box.innerHTML = '<div class="alert err" style="margin:12px">טעינת המפה נכשלה (Leaflet לא נטען — בדוק/י חיבור אינטרנט).</div>'; return; }
+
+  if (MapState.map) { MapState.map.remove(); MapState.map = null; }
+  MapState.originMarker = MapState.destMarker = MapState.originCoords = MapState.destCoords = null;
+
+  const map = L.map('order-map').setView([31.4, 35.0], 7);   // מרכז ישראל
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+  MapState.map = map;
+
+  // לחיצה על המפה → הצבת יעד + מילוי כתובת (reverse geocoding)
+  map.on('click', (e) => {
+    setDestMarker(e.latlng.lat, e.latlng.lng);
+    reverseFillDestination(e.latlng.lat, e.latlng.lng);
+  });
+
+  // הצגת המקור (כתובת המגורים) על המפה
+  const home = State.profile.homeAddress;
+  if (home) geocodeOrigin(home);
+
+  setTimeout(() => map.invalidateSize(), 200);   // תיקון תצוגה כשהמסך נטען
+}
+
+function setOriginMarker(lat, lng) {
+  const L = window.L;
+  if (MapState.originMarker) MapState.originMarker.setLatLng([lat, lng]);
+  else MapState.originMarker = L.marker([lat, lng], { icon: mapPin('🟢'), title: 'מקור' }).addTo(MapState.map);
+  MapState.originCoords = { lat, lng };
+}
+
+function setDestMarker(lat, lng) {
+  const L = window.L;
+  if (MapState.destMarker) MapState.destMarker.setLatLng([lat, lng]);
+  else MapState.destMarker = L.marker([lat, lng], { icon: mapPin('🔴'), title: 'יעד' }).addTo(MapState.map);
+  MapState.destCoords = { lat, lng };
+}
+
+// geocode() — כתובת → קואורדינטות (Nominatim, מוגבל לישראל)
+async function geocode(query) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=il&accept-language=he&q=${encodeURIComponent(query)}`;
+  try {
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    const arr = await res.json();
+    return arr[0] ? { lat: +arr[0].lat, lng: +arr[0].lon, label: arr[0].display_name } : null;
+  } catch { return null; }
+}
+
+// reverseGeocode() — קואורדינטות → כתובת
+async function reverseGeocode(lat, lng) {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&accept-language=he&lat=${lat}&lon=${lng}`;
+  try { return await (await fetch(url)).json(); } catch { return null; }
+}
+
+async function geocodeOrigin(address) {
+  const geo = document.getElementById('geo-status');
+  const r = await geocode(address);
+  if (!r) { if (geo) geo.textContent = 'לא ניתן היה לאתר את כתובת המקור על המפה.'; return; }
+  setOriginMarker(r.lat, r.lng);
+  if (!MapState.destCoords && MapState.map) MapState.map.setView([r.lat, r.lng], 13);
+}
+
+// חיפוש יעד לפי עיר/רחוב/מספר בית → עדכון המפה
+async function searchDestinationOnMap() {
+  const geo = document.getElementById('geo-status');
+  const v = id => document.getElementById(id).value.trim();
+  const city = v('d_city'), street = v('d_street'), house = v('d_house');
+  if (!city && !street) { geo.textContent = 'הזן/י לפחות עיר או רחוב לחיפוש.'; return; }
+  geo.textContent = 'מחפש/ת…';
+  const r = await geocode(`${street} ${house}, ${city}, ישראל`);
+  if (!r) { geo.textContent = '✗ לא נמצאה כתובת תואמת. נסה/י לדייק או לבחור נקודה על המפה.'; return; }
+  setDestMarker(r.lat, r.lng);
+  MapState.map.setView([r.lat, r.lng], 15);
+  document.getElementById('o_dest').value = `${street}${house ? ' ' + house : ''}${city ? ', ' + city : ''}`.trim();
+  geo.textContent = '✓ היעד סומן על המפה.';
+}
+
+// מילוי כתובת היעד מלחיצה על המפה (reverse geocoding)
+async function reverseFillDestination(lat, lng) {
+  const geo = document.getElementById('geo-status');
+  geo.textContent = 'מזהה כתובת…';
+  const j = await reverseGeocode(lat, lng);
+  const a = (j && j.address) || {};
+  const city = a.city || a.town || a.village || a.municipality || a.county || '';
+  const street = a.road || '';
+  const house = a.house_number || '';
+  document.getElementById('d_city').value = city;
+  document.getElementById('d_street').value = street;
+  document.getElementById('d_house').value = house;
+  const composed = `${street}${house ? ' ' + house : ''}${city ? ', ' + city : ''}`.trim();
+  document.getElementById('o_dest').value = composed || (j && j.display_name) || `נקודה על המפה (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+  geo.textContent = '✓ היעד נבחר מהמפה.';
 }
 
 function rideRowOrder(r) {
@@ -448,6 +583,7 @@ function createRideRequest() {
     gregorianDate: date, hebrewDate: generateHebrewDate(date), weekday: getWeekday(date),
     pickupTime: time, pickupAddress: pickup, pickupEntrance: '',
     destinationAddress: dest, destinationEntrance: '',
+    pickupCoords: MapState.originCoords, destinationCoords: MapState.destCoords,
     passengersCount: pax,
     fullMeterPrice: null, halfPricePerPassenger: null, totalPrice: null,
     status: 'pending', paymentStatus: 'unpaid', barcode: null,
