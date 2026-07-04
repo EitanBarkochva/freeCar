@@ -445,12 +445,14 @@ function registerUser() {
   if (result.blocked) {
     blockUser(p.id, result.reason);
     showStatus(status, '⛔ ' + result.reason, false);
+    setTimeout(() => renderRegister(), 400);
   } else {
     db.update('users', p.id, { status: 'approved' });
     State.profile.status = 'approved';
-    showStatus(status, '✓ הפרטים נשמרו. ניתן להזמין הסעות.', true);
+    // מעבר ישיר להזמנת נסיעה: מקור = בית, יעד = עבודה
+    showStatus(status, '✓ הפרטים נשמרו! עוברים להזמנת נסיעה…', true);
+    setTimeout(() => navigate('order'), 700);
   }
-  setTimeout(() => renderRegister(), 400);
 }
 
 // שמירת מסמך (בדמו נשמר שם הקובץ בלבד, לא התוכן)
@@ -507,10 +509,12 @@ function renderOrder() {
   const myRides = db.where('rideRequests', r => r.userId === p.id);
 
   const home = p.homeAddress || '';
+  const work = p.workAddress || '';
+  const esc = s => String(s || '').replace(/"/g, '&quot;');
 
   document.getElementById('screen-order').innerHTML = `
     <h1 class="screen-title">הזמנת נסיעה</h1>
-    <p class="screen-sub">המקור הוא כתובת המגורים שלך. בחר/י יעד בלחיצה על המפה, או הקלד/י עיר · רחוב · מספר בית והמפה תתעדכן.</p>
+    <p class="screen-sub">מקור = כתובת המגורים · יעד = כתובת העבודה. ניתן לערוך את שניהם, להחליף ביניהם, או לבחור יעד במפה.</p>
 
     <div class="card">
       <h2>בקשה חדשה</h2>
@@ -522,7 +526,11 @@ function renderOrder() {
             <div class="field"><label>שעת איסוף <span class="req">*</span></label><select id="o_time">${timeOptions}</select></div>
           </div>
 
-          <div class="field"><label>🟢 כתובת מקור (המגורים שלך) <span class="req">*</span></label><input id="o_pickup" value="${home.replace(/"/g, '&quot;')}" placeholder="כתובת המגורים שלך"></div>
+          <div class="field"><label>🟢 כתובת מקור <span class="req">*</span></label><input id="o_pickup" value="${esc(home)}" placeholder="ברירת מחדל: כתובת המגורים שלך"></div>
+
+          <div style="text-align:center;margin:2px 0 10px">
+            <button class="btn btn-ghost btn-sm" id="swap-btn" title="החלפת מקור ויעד">⇅ החלפת מקור ויעד</button>
+          </div>
 
           <h3>🔴 יעד</h3>
           <div class="grid">
@@ -531,7 +539,7 @@ function renderOrder() {
             <div class="field"><label>מספר בית</label><input id="d_house" placeholder="לדוגמה: 12"></div>
             <div class="field" style="display:flex;align-items:flex-end"><button class="btn btn-ghost btn-sm" id="d_search" style="width:100%">🔎 חפש/י על המפה</button></div>
           </div>
-          <div class="field"><label>כתובת יעד מלאה <span class="req">*</span></label><input id="o_dest" placeholder="תתמלא אוטומטית מהמפה / החיפוש"></div>
+          <div class="field"><label>כתובת יעד מלאה <span class="req">*</span></label><input id="o_dest" value="${esc(work)}" placeholder="ברירת מחדל: כתובת העבודה שלך"></div>
           <div class="geo-status" id="geo-status"></div>
 
           <div class="grid">
@@ -568,8 +576,42 @@ function renderOrder() {
   });
   document.getElementById('d_search').addEventListener('click', searchDestinationOnMap);
   document.getElementById('submit-order').addEventListener('click', createRideRequest);
+  document.getElementById('swap-btn').addEventListener('click', swapOriginDest);
+  // עריכה ידנית של כתובת → עדכון הסמן במפה
+  document.getElementById('o_pickup').addEventListener('change', () => geocodeOrigin(document.getElementById('o_pickup').value.trim()));
+  document.getElementById('o_dest').addEventListener('change', () => geocodeDest(document.getElementById('o_dest').value.trim()));
 
   initOrderMap();   // אתחול המפה לאחר שה-DOM מוכן
+}
+
+// swapOriginDest() — החלפת מקור ↔ יעד (כתובות + סמנים במפה)
+function swapOriginDest() {
+  const pi = document.getElementById('o_pickup'), di = document.getElementById('o_dest');
+  [pi.value, di.value] = [di.value, pi.value];
+
+  // החלפת הקואורדינטות והצבת הסמנים מחדש
+  const oc = MapState.originCoords, dc = MapState.destCoords;
+  placeOrClear('origin', dc);
+  placeOrClear('dest', oc);
+  fitMapToMarkers();
+
+  // שדות חיפוש היעד כבר לא רלוונטיים לכתובת החדשה — ניקוי
+  ['d_city', 'd_street', 'd_house'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const geo = document.getElementById('geo-status');
+  if (geo) geo.textContent = '⇅ המקור והיעד הוחלפו.';
+}
+
+// הצבת סמן לפי קואורדינטות, או הסרתו אם אין
+function placeOrClear(kind, coords) {
+  const markerKey = kind === 'origin' ? 'originMarker' : 'destMarker';
+  const coordsKey = kind === 'origin' ? 'originCoords' : 'destCoords';
+  if (coords) {
+    kind === 'origin' ? setOriginMarker(coords.lat, coords.lng) : setDestMarker(coords.lat, coords.lng);
+  } else {
+    if (MapState[markerKey] && MapState.map) MapState.map.removeLayer(MapState[markerKey]);
+    MapState[markerKey] = null;
+    MapState[coordsKey] = null;
+  }
 }
 
 // ============================================================
@@ -600,11 +642,24 @@ function initOrderMap() {
     reverseFillDestination(e.latlng.lat, e.latlng.lng);
   });
 
-  // הצגת המקור (כתובת המגורים) על המפה
-  const home = State.profile.homeAddress;
-  if (home) geocodeOrigin(home);
+  // הצגת המקור והיעד על המפה (מקור = בית, יעד = עבודה — או מה שבשדות)
+  const pickupVal = (document.getElementById('o_pickup') || {}).value || '';
+  const destVal = (document.getElementById('o_dest') || {}).value || '';
+  if (pickupVal.trim()) geocodeOrigin(pickupVal.trim());
+  // השהיה קלה בין שתי בקשות geocoding (מגבלת Nominatim ~1 לשנייה)
+  if (destVal.trim()) setTimeout(() => geocodeDest(destVal.trim()), 1100);
 
   setTimeout(() => map.invalidateSize(), 200);   // תיקון תצוגה כשהמסך נטען
+}
+
+// התאמת תצוגת המפה לסמנים הקיימים
+function fitMapToMarkers() {
+  if (!MapState.map) return;
+  const pts = [];
+  if (MapState.originCoords) pts.push([MapState.originCoords.lat, MapState.originCoords.lng]);
+  if (MapState.destCoords) pts.push([MapState.destCoords.lat, MapState.destCoords.lng]);
+  if (pts.length === 2) MapState.map.fitBounds(pts, { padding: [50, 50] });
+  else if (pts.length === 1) MapState.map.setView(pts[0], 13);
 }
 
 function setOriginMarker(lat, lng) {
@@ -638,11 +693,22 @@ async function reverseGeocode(lat, lng) {
 }
 
 async function geocodeOrigin(address) {
+  if (!address) return;
   const geo = document.getElementById('geo-status');
   const r = await geocode(address);
   if (!r) { if (geo) geo.textContent = 'לא ניתן היה לאתר את כתובת המקור על המפה.'; return; }
   setOriginMarker(r.lat, r.lng);
-  if (!MapState.destCoords && MapState.map) MapState.map.setView([r.lat, r.lng], 13);
+  fitMapToMarkers();
+}
+
+// geocodeDest() — איתור כתובת היעד על המפה
+async function geocodeDest(address) {
+  if (!address) return;
+  const geo = document.getElementById('geo-status');
+  const r = await geocode(address);
+  if (!r) { if (geo) geo.textContent = 'לא ניתן היה לאתר את כתובת היעד על המפה.'; return; }
+  setDestMarker(r.lat, r.lng);
+  fitMapToMarkers();
 }
 
 // חיפוש יעד לפי עיר/רחוב/מספר בית → עדכון המפה
