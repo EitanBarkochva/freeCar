@@ -107,6 +107,20 @@ p.screen-sub { color: var(--muted); margin-bottom: 22px; font-size: 15px; }
 .checkbox-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; font-size: 14px; line-height: 1.5; }
 .checkbox-row input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--accent); }
 
+/* ===================== פקד בחירה עם חיפוש (ערים/רחובות) ===================== */
+.combo { position: relative; }
+.combo input:disabled { opacity: .55; cursor: not-allowed; }
+.combo-list {
+  position: absolute; top: 100%; right: 0; left: 0; z-index: 60;
+  background: #fff; border: 1px solid var(--border); border-radius: 12px;
+  margin-top: 4px; max-height: 220px; overflow-y: auto;
+  box-shadow: var(--shadow); display: none;
+}
+.combo-list.open { display: block; }
+.combo-item { padding: 10px 14px; cursor: pointer; font-size: 14px; }
+.combo-item:hover { background: var(--accent-soft); }
+.combo-empty { padding: 10px 14px; color: var(--muted); font-size: 13px; }
+
 /* ===================== כפתורים (גלולה, בסגנון PayBox) ===================== */
 .btn {
   border: none; border-radius: 999px; padding: 12px 24px;

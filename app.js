@@ -156,6 +156,138 @@ function navigate(screenId) {
 }
 
 // ============================================================
+//  4ב. נתוני ערים ורחובות — מרשם ממשלתי (data.gov.il)
+//  ערים: 1,306 יישובים · רחובות: ~63,000, נטענים לפי עיר.
+// ============================================================
+const GOV_API = 'https://data.gov.il/api/3/action/datastore_search';
+const CITIES_RESOURCE = '5c78e9fa-c2e2-4771-93ff-7f400a12f7ba';
+const STREETS_RESOURCE = '9ad3862c-8391-4b2f-84a4-2d4c68625f4b';
+const AddressData = { cities: null, streetsByCity: {} };
+
+// טעינת כל היישובים (פעם אחת, עם מטמון ב-localStorage)
+async function fetchCities() {
+  if (AddressData.cities) return AddressData.cities;
+  try {
+    const cached = localStorage.getItem('freecar_cities_v1');
+    if (cached) { AddressData.cities = JSON.parse(cached); return AddressData.cities; }
+  } catch { /* מטמון פגום — נטען מחדש */ }
+  try {
+    const url = `${GOV_API}?resource_id=${CITIES_RESOURCE}&limit=1500&fields=${encodeURIComponent('שם_ישוב,סמל_ישוב')}`;
+    const d = await (await fetch(url)).json();
+    const cities = (d.result.records || [])
+      .map(r => ({ name: String(r['שם_ישוב'] || '').trim(), symbol: r['סמל_ישוב'] }))
+      .filter(c => c.name)
+      .sort((a, b) => a.name.localeCompare(b.name, 'he'));
+    AddressData.cities = cities;
+    try { localStorage.setItem('freecar_cities_v1', JSON.stringify(cities)); } catch { /* מטמון מלא — לא קריטי */ }
+    return cities;
+  } catch { return []; }
+}
+
+// טעינת רחובות של עיר לפי סמל יישוב (מטמון בזיכרון)
+async function fetchStreets(citySymbol) {
+  if (AddressData.streetsByCity[citySymbol]) return AddressData.streetsByCity[citySymbol];
+  try {
+    const filters = encodeURIComponent(JSON.stringify({ 'סמל_ישוב': citySymbol }));
+    const url = `${GOV_API}?resource_id=${STREETS_RESOURCE}&limit=5000&fields=${encodeURIComponent('שם_רחוב')}&filters=${filters}`;
+    const d = await (await fetch(url)).json();
+    const streets = [...new Set((d.result.records || []).map(r => String(r['שם_רחוב'] || '').trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'he'));
+    AddressData.streetsByCity[citySymbol] = streets;
+    return streets;
+  } catch { return []; }
+}
+
+// פקד בחירה עם חיפוש: הקלדה מסננת, לחיצה בוחרת
+// provider(query) => מערך {label, value}; onPick(item) בבחירה
+function setupCombo(inputEl, listEl, provider, onPick) {
+  let items = [];
+  async function refresh() {
+    const q = inputEl.value.trim();
+    items = await provider(q);
+    if (!items.length) {
+      listEl.innerHTML = `<div class="combo-empty">אין תוצאות${q ? ` עבור "${q}"` : ''}</div>`;
+    } else {
+      listEl.innerHTML = items.slice(0, 50).map((it, i) => `<div class="combo-item" data-i="${i}">${it.label}</div>`).join('');
+      listEl.querySelectorAll('.combo-item').forEach(el => {
+        // mousedown ולא click — כדי להקדים את ה-blur של השדה
+        el.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          const it = items[+el.dataset.i];
+          inputEl.value = it.label;
+          listEl.classList.remove('open');
+          onPick(it);
+        });
+      });
+    }
+    listEl.classList.add('open');
+  }
+  inputEl.addEventListener('input', refresh);
+  inputEl.addEventListener('focus', refresh);
+  inputEl.addEventListener('blur', () => setTimeout(() => listEl.classList.remove('open'), 150));
+}
+
+// חיבור צמד עיר+רחוב: בחירת עיר מאפסת וטוענת את הרחובות שלה
+function wireAddressCombos(prefix, initialSymbol) {
+  const cityInput = document.getElementById(prefix + '_city');
+  const cityList = document.getElementById(prefix + '_city_list');
+  const streetInput = document.getElementById(prefix + '_street');
+  const streetList = document.getElementById(prefix + '_street_list');
+  let citySymbol = initialSymbol || null;
+
+  streetInput.disabled = !citySymbol;
+
+  setupCombo(cityInput, cityList,
+    async (q) => {
+      const cities = await fetchCities();
+      const norm = q.replace(/['"־-]/g, '');
+      return cities
+        .filter(c => !norm || c.name.replace(/['"־-]/g, '').includes(norm))
+        .map(c => ({ label: c.name, value: c.symbol }));
+    },
+    (it) => {
+      citySymbol = it.value;
+      document.getElementById(prefix + '_city_symbol').value = it.value;
+      streetInput.value = '';
+      streetInput.disabled = false;
+      streetInput.placeholder = 'טוען רחובות…';
+      fetchStreets(citySymbol).then(s => { streetInput.placeholder = s.length ? 'הקלד/י לחיפוש רחוב…' : 'לא נמצאו רחובות — הקלד/י ידנית'; });
+    });
+
+  setupCombo(streetInput, streetList,
+    async (q) => {
+      if (!citySymbol) return [];
+      const streets = await fetchStreets(citySymbol);
+      return streets.filter(s => !q || s.includes(q)).map(s => ({ label: s, value: s }));
+    },
+    () => { /* הערך כבר הוזן לשדה */ });
+}
+
+// בלוק שדות כתובת: עיר (חיפוש) → רחוב (חיפוש) → מספר בית
+function addressFieldsHTML(prefix, title, p) {
+  const esc = s => String(s || '').replace(/"/g, '&quot;');
+  return `
+      <h3>${title}</h3>
+      <input type="hidden" id="${prefix}_city_symbol" value="${esc(p[prefix + 'CitySymbol'])}">
+      <div class="grid">
+        <div class="field"><label>עיר <span class="req">*</span></label>
+          <div class="combo">
+            <input id="${prefix}_city" value="${esc(p[prefix + 'City'])}" placeholder="הקלד/י לחיפוש עיר…" autocomplete="off">
+            <div class="combo-list" id="${prefix}_city_list"></div>
+          </div>
+        </div>
+        <div class="field"><label>רחוב <span class="req">*</span></label>
+          <div class="combo">
+            <input id="${prefix}_street" value="${esc(p[prefix + 'Street'])}" placeholder="בחר/י קודם עיר" autocomplete="off">
+            <div class="combo-list" id="${prefix}_street_list"></div>
+          </div>
+        </div>
+        <div class="field"><label>מספר בית <span class="req">*</span></label><input id="${prefix}_house" value="${esc(p[prefix + 'House'])}" placeholder="לדוגמה: 12"></div>
+        <div class="field"><label>מספר כניסה</label><input id="${prefix}_entrance" value="${esc(p[prefix + 'Entrance'])}" placeholder="אם יש יותר מכניסה אחת"></div>
+      </div>`;
+}
+
+// ============================================================
 //  5. מסך 1 — הרשמה, התחייבות ומסמכים
 // ============================================================
 function renderRegister() {
@@ -186,11 +318,9 @@ function renderRegister() {
         <div class="field"><label>שם משפחה <span class="req">*</span></label><input id="lastName" value="${p.lastName}"></div>
         <div class="field"><label>טלפון <span class="req">*</span></label><input id="phone" type="tel" value="${p.phone}"></div>
         <div class="field"><label>אימייל <span class="req">*</span></label><input id="email" type="email" value="${p.email}"></div>
-        <div class="field"><label>כתובת מגורים מלאה <span class="req">*</span></label><input id="homeAddress" value="${p.homeAddress}" placeholder="רחוב, מספר בית, עיר"></div>
-        <div class="field"><label>מספר כניסה (מגורים)</label><input id="homeEntrance" value="${p.homeEntrance}" placeholder="אם יש יותר מכניסה אחת"></div>
-        <div class="field"><label>כתובת עבודה מלאה <span class="req">*</span></label><input id="workAddress" value="${p.workAddress}" placeholder="רחוב, מספר בית, עיר"></div>
-        <div class="field"><label>מספר כניסה (עבודה)</label><input id="workEntrance" value="${p.workEntrance}"></div>
       </div>
+      ${addressFieldsHTML('home', '🏠 כתובת מגורים', p)}
+      ${addressFieldsHTML('work', '💼 כתובת עבודה', p)}
     </div>
 
     <div class="card">
@@ -249,6 +379,11 @@ function renderRegister() {
   `;
 
   document.getElementById('submit-register').addEventListener('click', registerUser);
+
+  // פקדי עיר/רחוב עם חיפוש (מרשם ממשלתי)
+  wireAddressCombos('home', p.homeCitySymbol);
+  wireAddressCombos('work', p.workCitySymbol);
+  fetchCities();   // טעינה מוקדמת של רשימת הערים
 }
 
 // registerUser() — שמירת פרטי המשתמש + הפעלת אימות מסמכים
@@ -257,18 +392,23 @@ function registerUser() {
   const val = id => (document.getElementById(id).value || '').trim();
   const p = State.profile;
 
-  // איסוף שדות
+  // איסוף שדות — כתובת מורכבת מעיר + רחוב + מספר בית
+  const composeAddr = (street, house, city) => `${street}${house ? ' ' + house : ''}${city ? ', ' + city : ''}`.trim();
   const data = {
     commitmentApproved: document.getElementById('commitment').checked,
     termsApproved: document.getElementById('terms').checked,
     firstName: val('firstName'), lastName: val('lastName'),
     phone: val('phone'), email: val('email'),
-    homeAddress: val('homeAddress'), homeEntrance: val('homeEntrance'),
-    workAddress: val('workAddress'), workEntrance: val('workEntrance'),
+    homeCity: val('home_city'), homeCitySymbol: val('home_city_symbol'),
+    homeStreet: val('home_street'), homeHouse: val('home_house'), homeEntrance: val('home_entrance'),
+    workCity: val('work_city'), workCitySymbol: val('work_city_symbol'),
+    workStreet: val('work_street'), workHouse: val('work_house'), workEntrance: val('work_entrance'),
     hasLicense: document.getElementById('hasLicense').checked,
     hasVehicle: document.getElementById('hasVehicle').checked,
     hasInsurance: document.getElementById('hasInsurance').checked,
   };
+  data.homeAddress = composeAddr(data.homeStreet, data.homeHouse, data.homeCity);
+  data.workAddress = composeAddr(data.workStreet, data.workHouse, data.workCity);
 
   // ---- ולידציות (סעיף 18) ----
   const errors = [];
@@ -278,8 +418,12 @@ function registerUser() {
   if (data.lastName.length < 2) errors.push('שם משפחה — לפחות 2 תווים');
   if (!/^\d{9,10}$/.test(data.phone.replace(/[-\s]/g, ''))) errors.push('מספר טלפון לא תקין');
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email)) errors.push('כתובת אימייל לא תקינה');
-  if (!data.homeAddress) errors.push('חובה כתובת מגורים');
-  if (!data.workAddress) errors.push('חובה כתובת עבודה');
+  if (!data.homeCity) errors.push('חובה לבחור עיר מגורים');
+  if (!data.homeStreet) errors.push('חובה לבחור רחוב מגורים');
+  if (!data.homeHouse) errors.push('חובה מספר בית (מגורים)');
+  if (!data.workCity) errors.push('חובה לבחור עיר עבודה');
+  if (!data.workStreet) errors.push('חובה לבחור רחוב עבודה');
+  if (!data.workHouse) errors.push('חובה מספר בית (עבודה)');
 
   // פרטי הרכב אופציונליים — נאספים אם הוזנו (לצורך השוואה רישיון מול ביטוח)
   const vlNumber = val('vl_number'), vlModel = val('vl_model');
