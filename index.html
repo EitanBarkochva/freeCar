@@ -4,19 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>הרשמה / התחברות</title>
+  <!-- Rubik — חלופה חינמית קרובה לפונט אלמוני של PayBox -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --card: #1e293b;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
-      --border: #334155;
-      --accent: #6366f1;
-      --ok: #34d399;
+      --bg: #f4f7f6;
+      --card: #ffffff;
+      --panel: #f0f4f3;
+      --text: #272727;
+      --muted: #7b8794;
+      --border: #e3e9e7;
+      --accent: #00d084;
+      --accent-dark: #00b06f;
+      --red: #cf2e2e;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      font-family: 'Rubik', 'Assistant', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
       min-height: 100vh;
       display: flex; align-items: center; justify-content: center;
       color: var(--text); padding: 20px;
@@ -24,40 +31,43 @@
     .card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 20px;
+      border-radius: 24px;
       padding: 40px 36px;
       width: 100%; max-width: 400px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      box-shadow: 0 12px 40px rgba(16, 55, 40, 0.10);
       text-align: center;
     }
     .logo {
-      width: 56px; height: 56px;
+      width: 60px; height: 60px;
       background: var(--accent);
-      border-radius: 16px;
+      border-radius: 18px;
       margin: 0 auto 20px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 28px;
+      font-size: 30px;
+      box-shadow: 0 6px 18px rgba(0, 208, 132, 0.35);
     }
-    h1 { font-size: 24px; margin-bottom: 8px; }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
     p.sub { color: var(--muted); font-size: 15px; margin-bottom: 24px; }
 
     .field { text-align: right; margin-bottom: 14px; }
-    .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .field label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
     .field input {
-      width: 100%; background: #0f172a; border: 1px solid var(--border);
-      border-radius: 10px; padding: 12px; color: var(--text); font-size: 15px;
+      width: 100%; background: var(--panel); border: 1.5px solid transparent;
+      border-radius: 14px; padding: 12px 14px; color: var(--text); font-size: 15px;
+      font-family: inherit; transition: border-color .15s, background .15s;
     }
-    .field input:focus { outline: none; border-color: var(--accent); }
+    .field input:focus { outline: none; border-color: var(--accent); background: #fff; }
 
     .row { display: flex; gap: 10px; margin-top: 4px; }
     .btn {
-      flex: 1; border: none; border-radius: 12px; padding: 13px;
-      font-size: 15px; font-weight: 600; cursor: pointer; transition: .15s;
+      flex: 1; border: none; border-radius: 999px; padding: 13px;
+      font-size: 15px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: .15s;
     }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { filter: brightness(1.1); }
-    .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: var(--border); }
+    .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(0,208,132,.35); }
+    .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+    .btn-secondary { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent-dark); }
 
     .divider { display: flex; align-items: center; gap: 12px; margin: 22px 0; color: var(--muted); font-size: 13px; }
     .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
@@ -65,17 +75,17 @@
     .google-btn {
       width: 100%;
       display: flex; align-items: center; justify-content: center; gap: 12px;
-      background: #fff; color: #1f2937;
-      border: none; border-radius: 12px;
-      padding: 14px; font-size: 16px; font-weight: 600;
-      cursor: pointer; transition: transform .1s, box-shadow .2s;
+      background: #fff; color: var(--text);
+      border: 1.5px solid var(--border); border-radius: 999px;
+      padding: 14px; font-size: 16px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: transform .1s, box-shadow .2s, border-color .15s;
     }
-    .google-btn:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.3); transform: translateY(-1px); }
+    .google-btn:hover { box-shadow: 0 6px 20px rgba(16,55,40,0.12); border-color: var(--accent); transform: translateY(-1px); }
     .google-btn img { width: 22px; height: 22px; }
 
     .status { font-size: 14px; margin-top: 16px; min-height: 18px; }
-    .status.err { color: #f87171; }
-    .status.ok { color: var(--ok); }
+    .status.err { color: var(--red); }
+    .status.ok { color: var(--accent-dark); }
     .badge { margin-top: 20px; font-size: 12px; color: var(--muted); }
   </style>
 </head>

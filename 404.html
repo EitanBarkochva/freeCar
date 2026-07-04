@@ -4,22 +4,35 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>הדף לא נמצא — freeCar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      font-family: 'Rubik', 'Assistant', 'Segoe UI', system-ui, sans-serif;
+      background: #f4f7f6;
       min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      color: #f1f5f9; padding: 20px; text-align: center;
+      color: #272727; padding: 20px; text-align: center;
     }
-    .box { max-width: 380px; }
-    .logo { font-size: 56px; margin-bottom: 12px; }
-    h1 { font-size: 26px; margin-bottom: 8px; }
-    p { color: #94a3b8; margin-bottom: 24px; }
+    .box {
+      max-width: 400px; background: #fff; border: 1px solid #e3e9e7;
+      border-radius: 24px; padding: 44px 36px;
+      box-shadow: 0 12px 40px rgba(16, 55, 40, 0.10);
+    }
+    .logo {
+      width: 60px; height: 60px; background: #00d084; border-radius: 18px;
+      margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;
+      font-size: 30px; box-shadow: 0 6px 18px rgba(0, 208, 132, 0.35);
+    }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    p { color: #7b8794; margin-bottom: 24px; }
     a {
-      display: inline-block; background: #6366f1; color: #fff; text-decoration: none;
-      border-radius: 12px; padding: 12px 24px; font-weight: 600;
+      display: inline-block; background: #00d084; color: #fff; text-decoration: none;
+      border-radius: 999px; padding: 12px 28px; font-weight: 600;
+      box-shadow: 0 4px 14px rgba(0,208,132,.35); transition: .15s;
     }
+    a:hover { background: #00b06f; transform: translateY(-1px); }
   </style>
 </head>
 <body>

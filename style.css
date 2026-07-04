@@ -1,24 +1,31 @@
-/* ===================== משתני עיצוב ===================== */
+/* ============================================================
+   freeCar — עיצוב בהשראת PayBox
+   תמה בהירה · ירוק חי · פינות מעוגלות · כפתורי גלולה · Rubik
+   ============================================================ */
 :root {
-  --navy: #0f172a;         /* כחול כהה לכותרות */
-  --navy-2: #1e293b;
-  --card: #1e293b;
-  --panel: #0f172a;
-  --text: #f1f5f9;
-  --muted: #94a3b8;
-  --border: #334155;
-  --accent: #6366f1;
-  --green: #22c55e;        /* מאושר */
-  --orange: #f59e0b;       /* בטיפול */
-  --red: #ef4444;          /* נדחה */
-  --radius: 14px;
+  --bg: #f4f7f6;            /* רקע כללי בהיר */
+  --card: #ffffff;          /* כרטיסים לבנים */
+  --panel: #f0f4f3;         /* שדות קלט */
+  --text: #272727;          /* טקסט ראשי (מהאתר של PayBox) */
+  --muted: #7b8794;         /* טקסט משני */
+  --border: #e3e9e7;        /* גבולות עדינים */
+  --accent: #00d084;        /* ירוק PayBox */
+  --accent-dark: #00b06f;   /* ירוק כהה ל-hover */
+  --accent-soft: #e0faf0;   /* ירוק רך לרקעים */
+  --blue: #039be6;          /* תכלת משני */
+  --navy: #103728;          /* ירוק-כהה לכותרות עליונות */
+  --green: #00b06f;         /* מאושר */
+  --orange: #fcb900;        /* בטיפול (ענבר PayBox) */
+  --red: #cf2e2e;           /* נדחה (אדום PayBox) */
+  --radius: 18px;
+  --shadow: 0 6px 24px rgba(16, 55, 40, 0.08);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  font-family: 'Rubik', 'Assistant', 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
   min-height: 100vh;
   color: var(--text);
   direction: rtl;
@@ -33,28 +40,34 @@ body {
 
 /* ===================== סרגל ניווט עליון ===================== */
 .topbar {
-  background: var(--navy);
+  background: var(--card);
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 12px rgba(16,55,40,.05);
   padding: 12px 20px;
   display: flex; align-items: center; gap: 16px;
   flex-wrap: wrap;
   position: sticky; top: 0; z-index: 50;
 }
-.topbar .brand { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-.topbar .brand span { font-size: 24px; }
+.topbar .brand { font-size: 20px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.topbar .brand span {
+  font-size: 20px; background: var(--accent); border-radius: 12px;
+  width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;
+}
 .nav { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
 .nav button {
   background: transparent; color: var(--muted);
-  border: 1px solid transparent; border-radius: 10px;
-  padding: 9px 14px; font-size: 14px; cursor: pointer; transition: .15s;
+  border: none; border-radius: 999px;
+  padding: 9px 18px; font-size: 14px; font-weight: 500;
+  font-family: inherit; cursor: pointer; transition: .15s;
 }
-.nav button:hover { color: var(--text); background: var(--navy-2); }
-.nav button.active { color: #fff; background: var(--accent); }
-.topbar .user-box { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.nav button:hover { color: var(--text); background: var(--panel); }
+.nav button.active { color: #fff; background: var(--accent); font-weight: 600; }
+.topbar .user-box { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text); }
 .topbar .user-box img { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--accent); }
 .role-select {
-  background: var(--navy-2); color: var(--text);
-  border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-size: 13px;
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; font-size: 13px;
+  font-family: inherit;
 }
 
 /* ===================== פריסת תוכן ===================== */
@@ -63,104 +76,112 @@ body {
 .screen.active { display: block; animation: fade .2s ease; }
 @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-h1.screen-title { font-size: 26px; margin-bottom: 6px; color: #c7d2fe; }
+h1.screen-title { font-size: 27px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
 p.screen-sub { color: var(--muted); margin-bottom: 22px; font-size: 15px; }
 
 /* ===================== כרטיסים ===================== */
 .card {
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 24px; margin-bottom: 22px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  box-shadow: var(--shadow);
 }
-.card h2 { font-size: 18px; margin-bottom: 16px; color: #e0e7ff; }
-.card h3 { font-size: 15px; margin: 14px 0 10px; color: #cbd5e1; }
+.card h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+.card h3 { font-size: 15px; font-weight: 600; margin: 14px 0 10px; color: var(--text); }
 
 /* ===================== טפסים ===================== */
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .field { margin-bottom: 14px; }
 .field.full { grid-column: 1 / -1; }
-.field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.field label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
 .field label .req { color: var(--red); }
 .field input, .field select, .field textarea {
-  width: 100%; background: var(--panel); border: 1px solid var(--border);
-  border-radius: 10px; padding: 11px; color: var(--text); font-size: 14px;
+  width: 100%; background: var(--panel); border: 1.5px solid transparent;
+  border-radius: 14px; padding: 12px 14px; color: var(--text); font-size: 14px;
+  font-family: inherit; transition: border-color .15s, background .15s;
 }
-.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
-.field input[readonly] { background: #111827; color: var(--muted); }
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-color: var(--accent); background: #fff;
+}
+.field input[readonly] { background: var(--panel); color: var(--muted); }
 
 .checkbox-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; font-size: 14px; line-height: 1.5; }
 .checkbox-row input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--accent); }
 
-/* ===================== כפתורים ===================== */
+/* ===================== כפתורים (גלולה, בסגנון PayBox) ===================== */
 .btn {
-  border: none; border-radius: 11px; padding: 12px 20px;
-  font-size: 15px; font-weight: 600; cursor: pointer; transition: .15s;
+  border: none; border-radius: 999px; padding: 12px 24px;
+  font-size: 15px; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: .15s;
 }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
-.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
-.btn-ghost:hover { background: var(--navy-2); }
-.btn-green { background: var(--green); color: #052e16; }
+.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(0,208,132,.35); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-dark); transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent-dark); }
+.btn-green { background: var(--green); color: #fff; }
+.btn-green:hover { filter: brightness(1.08); }
 .btn-red { background: var(--red); color: #fff; }
-.btn-orange { background: var(--orange); color: #451a03; }
-.btn-sm { padding: 7px 12px; font-size: 13px; }
+.btn-orange { background: var(--orange); color: #4a3200; }
+.btn-sm { padding: 7px 16px; font-size: 13px; }
 .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
 
 /* ===================== טבלאות ===================== */
-.table-wrap { overflow-x: auto; }
+.table-wrap { overflow-x: auto; border-radius: 14px; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th, td { padding: 11px 10px; text-align: right; border-bottom: 1px solid var(--border); }
-th { background: var(--navy); color: #c7d2fe; font-weight: 600; white-space: nowrap; }
-tr:hover td { background: rgba(99,102,241,.06); }
+th, td { padding: 12px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+th { background: var(--accent-soft); color: var(--navy); font-weight: 600; white-space: nowrap; }
+th:first-child { border-top-right-radius: 12px; }
+th:last-child { border-top-left-radius: 12px; }
+tr:hover td { background: #f7fbf9; }
 td.empty { text-align: center; color: var(--muted); padding: 26px; }
 
 /* ===================== תגי סטטוס ===================== */
-.badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-.badge.approved { background: rgba(34,197,94,.15); color: #4ade80; }
-.badge.pending  { background: rgba(245,158,11,.15); color: #fbbf24; }
-.badge.rejected { background: rgba(239,68,68,.15); color: #f87171; }
-.badge.blocked  { background: rgba(239,68,68,.2); color: #fca5a5; }
-.badge.paid     { background: rgba(34,197,94,.15); color: #4ade80; }
-.badge.unpaid   { background: rgba(148,163,184,.15); color: #cbd5e1; }
+.badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.badge.approved { background: var(--accent-soft); color: var(--accent-dark); }
+.badge.pending  { background: #fff6de; color: #a37200; }
+.badge.rejected { background: #fdeaea; color: var(--red); }
+.badge.blocked  { background: #fdeaea; color: var(--red); }
+.badge.paid     { background: var(--accent-soft); color: var(--accent-dark); }
+.badge.unpaid   { background: var(--panel); color: var(--muted); }
 
 /* ===================== הודעות ===================== */
-.alert { border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 14px; }
-.alert.info { background: rgba(99,102,241,.12); border: 1px solid var(--accent); color: #c7d2fe; }
-.alert.warn { background: rgba(245,158,11,.12); border: 1px solid var(--orange); color: #fcd34d; }
-.alert.err  { background: rgba(239,68,68,.12); border: 1px solid var(--red); color: #fca5a5; }
-.alert.ok   { background: rgba(34,197,94,.12); border: 1px solid var(--green); color: #86efac; }
+.alert { border-radius: 14px; padding: 12px 16px; font-size: 14px; margin-bottom: 14px; }
+.alert.info { background: #e7f5fd; border: 1px solid #b5e0f7; color: #056ba1; }
+.alert.warn { background: #fff6de; border: 1px solid #f5df9e; color: #7d5b00; }
+.alert.err  { background: #fdeaea; border: 1px solid #f3c1c1; color: #a32222; }
+.alert.ok   { background: var(--accent-soft); border: 1px solid #a9ecd2; color: #007a4d; }
 .inline-status { font-size: 13px; margin-top: 8px; min-height: 16px; }
-.inline-status.err { color: #f87171; }
-.inline-status.ok { color: #86efac; }
+.inline-status.err { color: var(--red); }
+.inline-status.ok { color: var(--accent-dark); }
 
 /* ===================== מודאל ===================== */
 .modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.6);
+  position: fixed; inset: 0; background: rgba(16, 55, 40, .45);
   display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
 }
 .modal-overlay.open { display: flex; }
 .modal {
-  background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+  background: var(--card); border-radius: 22px;
   padding: 28px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(16,55,40,.25);
 }
-.modal h2 { margin-bottom: 16px; }
+.modal h2 { margin-bottom: 16px; font-weight: 700; }
 .modal .close-x { float: left; cursor: pointer; color: var(--muted); font-size: 22px; line-height: 1; }
 
 /* ===================== ברקוד / QR ===================== */
 .qr-box { text-align: center; padding: 16px; }
-.qr-box img { background: #fff; padding: 8px; border-radius: 12px; }
+.qr-box img { background: #fff; padding: 10px; border-radius: 16px; border: 1px solid var(--border); }
 .qr-code-text {
   font-family: monospace; font-size: 15px; letter-spacing: 1px;
-  background: var(--panel); border: 1px dashed var(--border); border-radius: 8px;
-  padding: 10px; margin-top: 12px; word-break: break-all;
+  background: var(--accent-soft); border: 1px dashed var(--accent); border-radius: 12px;
+  padding: 10px; margin-top: 12px; word-break: break-all; color: var(--accent-dark);
 }
 
 /* ===================== קאונטר Admin ===================== */
 .counter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 12px; }
-.counter-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
-.counter-card .num { font-size: 28px; font-weight: 800; color: var(--accent); }
-.counter-card .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.counter-card { background: var(--accent-soft); border: 1px solid #a9ecd2; border-radius: 16px; padding: 16px; text-align: center; }
+.counter-card .num { font-size: 30px; font-weight: 700; color: var(--accent-dark); }
+.counter-card .lbl { font-size: 12px; color: var(--navy); margin-top: 4px; }
 
 /* ===================== מפה + פריסת הזמנת נסיעה ===================== */
 /* RTL: הילד הראשון (טופס) מימין, השני (מפה) משמאל */
@@ -168,12 +189,12 @@ td.empty { text-align: center; color: var(--muted); padding: 26px; }
 .order-form { flex: 1 1 42%; min-width: 0; }
 .order-map-wrap { flex: 1 1 58%; min-width: 0; display: flex; flex-direction: column; }
 .order-map {
-  flex: 1; min-height: 420px; border-radius: 12px; overflow: hidden;
+  flex: 1; min-height: 420px; border-radius: 16px; overflow: hidden;
   border: 1px solid var(--border); background: var(--panel);
 }
 .leaflet-container { font-family: inherit; }
 .map-legend { font-size: 12px; color: var(--muted); margin-top: 8px; text-align: center; }
-.map-pin { font-size: 26px; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+.map-pin { font-size: 26px; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
 .geo-status { font-size: 12px; color: var(--muted); margin-top: 4px; min-height: 15px; }
 
 @media (max-width: 820px) {
